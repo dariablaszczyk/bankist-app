@@ -63,10 +63,6 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 const displayMovements = function (movements) {
   containerMovements.innerHTML = "";
-
-
-
-
   movements.forEach(function (mov, i) {
     const type = mov > 0 ? "deposit" : "withdrawal";
     const html = ` <div class="movements__row">
@@ -76,7 +72,6 @@ const displayMovements = function (movements) {
     containerMovements.insertAdjacentHTML("afterbegin", html);
   });
 }
-displayMovements(account1.movements);
 
 const calcDisplayBalance = function (movements) {
   const balance = movements.reduce(function (acc, mov) {
@@ -85,19 +80,22 @@ const calcDisplayBalance = function (movements) {
   labelBalance.textContent = `${balance} EUR`;
 };
 
-calcDisplayBalance(account1.movements);
-
-const calcDisplaySummary = function (movements) {
-  const incomes = movements.filter(mov => mov > 0).
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements.filter(mov => mov > 0).
     reduce((acc, mov) => acc + mov, 0);
   labelSumIn.textContent = `${incomes} EUR`
 
-  const out = movements.filter(mov => mov < 0).
-  reduce((acc, mov) => acc + mov, 0);
-labelSumOut.textContent = `${out} EUR`
-};
+  const out = acc.movements.filter(mov => mov < 0).
+    reduce((acc, mov) => acc + mov, 0);
+  labelSumOut.textContent = `${Math.abs(out)} EUR`
 
-calcDisplaySummary(account1.movements)
+  const interest = acc.movements.filter(mov => mov > 0)
+    .filter((int, i, arr) => int >= 1).
+    map(deposit => (deposit * acc.interestRate) / 100).
+    reduce((acc, int) => acc + int, 0);
+
+  labelSumInterest.textContent = `${interest} EUR`
+};
 
 const createUsernames = function (accs) {
   accs.forEach(function (acc) {
@@ -108,6 +106,29 @@ const createUsernames = function (accs) {
       .join("");
   })
 };
+
+createUsernames(accounts);
+
+let currentAccount;
+
+btnLogin.addEventListener("click", function (event) {
+  event.preventDefault();
+  currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value);
+  console.log(currentAccount);
+
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    // Disp message
+    labelWelcome.textContent = `Welcome back, ${currentAccount.owner.split(" ")[0]}`;
+    containerApp.style.opacity = 1;
+    inputLoginUsername.value = inputLoginPin.value = "";
+    // Disp mov
+    displayMovements(currentAccount.movements);
+    // Disp balance
+    calcDisplayBalance(currentAccount.movements);
+    // Disp summary
+    calcDisplaySummary(currentAccount);
+  }
+});
 
 /*const deposits = movements.filter(function (mov) {
   return mov > 0;
@@ -145,4 +166,10 @@ const total = movements
 .filter(mov => mov > 0)
 .map(mov => eurToUsd*mov)
 .reduce((acc, mov) => acc + mov, 0);
+
+const firstWithdrawal = movements.find(mov => mov <0);
+const account = accounts.find(acc => acc.owner === "Jessica Davis");
+console.log(account);
 */
+
+
